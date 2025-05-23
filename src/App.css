@@ -1,0 +1,36 @@
+#root {
+  display: grid;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+input {
+  width: 25%;
+  justify-self: center;
+}
+
+#buttons {
+  align-self: center;
+}
+
+.card {
+  padding: 2em;
+  justify-items: center;
+}
+
+#results {
+  width: 60%;
+  float:left;
+}
+
+#playlist {
+  background-color: black;
+  width: 40%;
+  float: right;
+  border-radius: 10px;
+  color: bisque;
+  
+}
+
