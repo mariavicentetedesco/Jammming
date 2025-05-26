@@ -13,10 +13,10 @@ const PlaylistTrack = (props) => {
 
   return (
     <>
-       <div id={{id}} style={{display:"flex"}}>
-          <span style={{display:"flex"}}>{name}</span>
-          <span style={{display:"flex"}}>{albumName}</span>
-          <span style={{display:"flex"}}>{artistName}</span>
+       <div className = "flexbox" id={{id}}>
+          <span >{name}</span>
+          <span >{albumName}</span>
+          <span >{artistName}</span>
           <button onClick={btnClick}>Remove</button>
         </div> 
     </>

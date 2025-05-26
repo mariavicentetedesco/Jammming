@@ -30,7 +30,7 @@ const Authentication = {
         const hashed = await sha256(codeVerifierNoHash)
         const codeChallenge = base64encode(hashed);
 
-        const scope = 'user-read-private user-read-email';
+        const scope = 'user-read-private user-read-email playlist-modify-private';
         const authUrl = new URL("https://accounts.spotify.com/authorize")
         
         // generated in the previous step
@@ -91,7 +91,7 @@ const Authentication = {
         localStorage.setItem('user_id', userIdResponse.id);
        
         window.location = '/';
-        
+
         }
       
 }

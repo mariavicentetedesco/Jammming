@@ -1,0 +1,10 @@
+.flexbox {
+    display: flex;
+    width: 100%;
+
+    span {
+        width: 25%;
+        text-align: left;
+        flex-grow: 1;
+    }
+}

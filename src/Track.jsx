@@ -3,10 +3,11 @@ const Track = (props) => {
   const name = props.name;
   const artistName = props.artistName;
   const id = props.id;
+  const uri = props.uri;
   const addSong = props.addSong;
 
   const  btnClick = function(event){
-     addSong(name, id, artistName);
+     addSong(name, id, artistName, albumName, uri);
   }
 
   return (

@@ -1,0 +1,31 @@
+.flexbox {
+    display: flex;
+    width: 100%;
+}
+
+span {
+  display: flex;
+  align-content: center;
+  align-items: center;
+  padding: 10px;
+  color: bisque;
+  font-weight: 700;
+  font-size: large;
+  text-align: left;
+  flex-grow: 1;
+}
+
+img {
+  display: flex;
+  height: 200px;
+  width: 200px;
+}
+
+a {
+  text-decoration: none;
+  color: bisque;
+}
+
+a:hover {
+  color: rgb(243, 186, 118);
+}

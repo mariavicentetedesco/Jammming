@@ -2,15 +2,15 @@ import { useState } from 'react'
 import './App.css'
 import Authentication  from './authentication'
 import Track from './Track'
-import Album from './Album'
 import Artist from './Artist'
 import PlaylistTrack from './PlaylistTrack'
 
 function App() {
   const [displayingTracks, setDisplayingTracks] = useState([]);
-  const [displayingAlbums, setDisplayingAlbums] = useState([]);
   const [displayingArtist, setDisplayingArtist] = useState([]);
   const [displayingPlaylistTracks, setDisplayingPlaylistTracks] = useState([]);
+  const [playlistName, setPlaylistName] = useState('');
+  const [playlistId, setPlaylistId] = useState('');
 
   const spotifyBaseURI = 'https://api.spotify.com/v1';
   let accessToken = '';
@@ -19,8 +19,8 @@ function App() {
     Authentication.initiateAuthentication();
   }
 
-  const addSong = function (name, id, artist) {
-     setDisplayingPlaylistTracks([...displayingPlaylistTracks, {name,id,key:id,artist}]);
+  const addSong = function (name, id, artist, album, uri) {
+     setDisplayingPlaylistTracks([...displayingPlaylistTracks, {name,id,key:id,artist, album, uri}]);
   }
 
   const removeSong = function (id) {
@@ -30,57 +30,146 @@ function App() {
   }
 
   const searchSong = function (event) {
-    setDisplayingAlbums([]);
     setDisplayingArtist([]);
     let searchInput = document.getElementById('searchText');
     getSongsfromSpotify(searchInput.value);
     document.getElementById('playlist').classList.add("shown");
   }
 
-  const searchAlbum = (event) => {
-    setDisplayingTracks([])
-    setDisplayingArtist([])
-    let searchInput = document.getElementById('searchText')
-    getAlbumfromSpotify(searchInput.value);
-    document.getElementById('playlist').classList.add("shown");
-  }
-
   const searchArtist = function(event) {
     setDisplayingTracks([]);
-    setDisplayingAlbums([]);
     let searchInput = document.getElementById('searchText');
     getArtistFromSpotify(searchInput.value);
     document.getElementById('playlist').classList.add("shown");
   }
 
-  const createPlaylist = function() {
-
-  }
-  
-  const postPlaylistToSpotify = function(playlistName) {
-    const userId = localStorage.getItem('user_id');
-    const createPlaylistURL = `${spotifyBaseURI}/users/userId/playlists`;
-
-    let postBody = {
-      name: playlistName
-    };
-
-    fetch(createPlaylistURL, {
-      method: 'POST',
+  const getArtistTopTracks = function(id) {
+    setDisplayingArtist([]);
+    const getTopTracksURL = `${spotifyBaseURI}/artists/${id}/top-tracks`;
+    fetch(getTopTracksURL, {
       headers: {
         Authorization: `Bearer ${accessToken}`
-      },
-      body: JSON.stringify(postBody)
-    }).then(response => 
-      {
-        return response.json();
-      }).then(data => {
+      }
+    }).then(response => response.json()).then(data => {
       if(data.error !== undefined && data.error.status === 401) {
         localStorage.removeItem('access_token');
         Authentication.initiateAuthentication();
         return;
       }
+      let tracks = data.tracks.map(track => ({
+        id: track.id,
+        name: track.name,
+        artist: track.artists[0].name,
+        album: track.album.name,
+        uri: track.uri
+      }))
+      setDisplayingTracks(tracks);
     })
+  }
+
+    const postPlaylistToSpotify = function() {
+      const userId = localStorage.getItem('user_id');
+      const createPlaylistURL = `${spotifyBaseURI}/users/${userId}/playlists`;
+
+      let playlistName = document.getElementById('playlistName').value;
+      
+      let postBody = {
+        name: playlistName,
+        public: false
+      };
+
+      fetch(createPlaylistURL, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: JSON.stringify(postBody)
+      }).then(response => 
+        {
+          return response.json();
+        })
+        .then(data => {
+        if(data.error !== undefined && data.error.status === 401) {
+          localStorage.removeItem('access_token');
+          Authentication.initiateAuthentication();
+          return;
+        }
+        setPlaylistId(data.id);
+        setPlaylistName(data.name);
+        
+        let addSongsToPlaylistURL = `${spotifyBaseURI}/playlists/${data.id}/tracks`;
+        let songsURIs = displayingPlaylistTracks.map(x => x.uri)
+
+        let addSongsBody = {
+        uris: songsURIs,
+        };
+
+        fetch(addSongsToPlaylistURL, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+         },
+         body: JSON.stringify(addSongsBody)
+        }).then(response => 
+          {
+          return response.json();
+          })
+          .then(data => {
+          if(data.error !== undefined && data.error.status === 401) {
+          localStorage.removeItem('access_token');
+          Authentication.initiateAuthentication();
+          return;
+          }
+        })
+      }) 
+  }
+
+  const postUpadatedPlaylistToSpotify = function() {
+    const updatePlaylistURL = `${spotifyBaseURI}/playlists/${playlistId}`;
+
+      let newPlaylistName = document.getElementById('playlistName').value;
+      
+      let putBody = {
+        name: newPlaylistName,
+        public: false
+      };
+
+      fetch(updatePlaylistURL, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: JSON.stringify(putBody)
+      })
+        .then(response => {
+       
+        setPlaylistName(newPlaylistName);
+        
+        let addSongsToPlaylistURL = `${spotifyBaseURI}/playlists/${playlistId}/tracks`;
+        let songsURIs = displayingPlaylistTracks.map(x => x.uri)
+
+        let addSongsBody = {
+        uris: songsURIs,
+        };
+
+        fetch(addSongsToPlaylistURL, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+         },
+         body: JSON.stringify(addSongsBody)
+        }).then(response => 
+          {
+          return response.json();
+          })
+          .then(data => {
+          if(data.error !== undefined && data.error.status === 401) {
+          localStorage.removeItem('access_token');
+          Authentication.initiateAuthentication();
+          return;
+          }
+        })
+      }) 
   }
 
   const getSongsfromSpotify = function(songTitle) {
@@ -103,29 +192,6 @@ function App() {
         uri: track.uri
       }))
       setDisplayingTracks(tracks);
-    })
-  }
-
-  const getAlbumfromSpotify = function(albumTitle) {
-    const getAlbumURL = `${spotifyBaseURI}/search?q=${albumTitle}&type=album&limit=5`;
-    fetch(getAlbumURL, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`
-      }
-    }).then(response => response.json()).then(data => {
-      if(data.error !== undefined && data.error.status === 401) {
-        localStorage.removeItem('access_token');
-        Authentication.initiateAuthentication();
-        return;
-      }
-      let albums = data.albums.items.map(album => ({
-        id: album.id,
-        image: album.images[0].url,
-        name: album.name,
-        artist: album.artists[0].name,
-        href: album.href
-      }))
-      setDisplayingAlbums(albums);
     })
   }
 
@@ -157,64 +223,56 @@ function App() {
         <div id="buttons">
           <button onClick={searchSong}>Search Song
           </button>
-          <button onClick={searchAlbum}>Search Album
-          </button>
           <button onClick={searchArtist}>Search Artist
           </button>
         </div>
-        <div id='results'>
-        {displayingTracks.map((track) => {
-        return (
-          <Track
-          id={track.id}
-          addSong={addSong}
-          name={track.name}
-          albumName={track.album}
-          key={track.id}
-          artistName={track.artist}
-          />
-        );
-        })}
-        {displayingAlbums.map((album) => {
-        return (
-          <Album
-          id={album.id}
-          name={album.name}
-          artist={album.artist}
-          key={album.id}
-          image={album.image}
-          />
-        );
-        })}
-        {displayingArtist.map((artist) => {
-        return (
-          <Artist
-          id={artist.id}
-          name={artist.name}
-          href={artist.href}
-          key={artist.id}
-          image={artist.image}
-          />
-        );
-        })}
-        </div>
-        <div id="playlist">
-          <h3>Playlist:</h3>
-           {displayingPlaylistTracks.map((track) => {
+        <div className='main'>
+          <div id='results'>
+          {displayingTracks.map((track) => {
+          return (
+            <Track
+            id={track.id}
+            addSong={addSong}
+            name={track.name}
+            albumName={track.album}
+            key={track.id}
+            artistName={track.artist}
+            uri={track.uri}
+            />
+          );
+          })}
+          {displayingArtist.map((artist) => {
+          return (
+            <Artist
+            id={artist.id}
+            name={artist.name}
+            href={artist.href}
+            key={artist.id}
+            image={artist.image}
+            getArtistTopTracks={getArtistTopTracks}
+            />
+          );
+          })}
+          </div>
+          <div id="playlist">
+          <h3>Playlist: {playlistName} </h3>
+           {displayingPlaylistTracks.map((track,i) => {
         return (
           <PlaylistTrack
           id={track.id}
           removeSong={removeSong}
           name={track.name}
           albumName={track.album}
-          key={track.id}
+          key={`${track.id}_${i}`}
           artistName={track.artist}
           />
         );
         })}
-          <input placeholder='Playlist name'></input>
-          <button>Create playlist</button>
+          <input id="playlistName" placeholder='Playlist name'></input>
+          <button onClick={postPlaylistToSpotify}>Create Playlist</button>
+          <button onClick={postUpadatedPlaylistToSpotify}>Update Playlist</button>
         </div>
+      </div>
       </div>
     </>
   )
