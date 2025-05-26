@@ -21,6 +21,9 @@ function App() {
 
   const addSong = function (name, id, artist, album, uri) {
      setDisplayingPlaylistTracks([...displayingPlaylistTracks, {name,id,key:id,artist, album, uri}]);
+    let currentResults = displayingTracks;
+    currentResults = currentResults.filter(x => x.id !== id);
+    setDisplayingTracks(currentResults);
   }
 
   const removeSong = function (id) {
@@ -184,13 +187,16 @@ function App() {
         Authentication.initiateAuthentication();
         return;
       }
+
       let tracks = data.tracks.items.map(track => ({
         id: track.id,
         name: track.name,
         artist: track.artists[0].name,
         album: track.album.name,
         uri: track.uri
-      }))
+      })).filter(result => {
+        return !displayingPlaylistTracks.map(playlistTrack => playlistTrack.id).includes(result.id)
+      });
       setDisplayingTracks(tracks);
     })
   }

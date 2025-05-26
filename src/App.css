@@ -3,7 +3,7 @@
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
-  width: 50%;
+  width:70%;
 }
 
 input {
@@ -37,6 +37,7 @@ input {
   flex-direction: column;
   flex-grow: 2;
   padding: 10px;
+  margin: 10px;
   background-color: black;
   max-width: 40%;
   border-radius: 10px;
@@ -51,5 +52,6 @@ input {
   display: flex;
   width: 60%;
   align-self: center;
+  margin: 10px;
 }
 
