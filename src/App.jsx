@@ -4,6 +4,7 @@ import Authentication  from './authentication'
 import Track from './Track'
 import Album from './Album'
 import Artist from './Artist'
+import PlaylistTrack from './PlaylistTrack'
 
 function App() {
   const [displayingTracks, setDisplayingTracks] = useState([]);
@@ -18,12 +19,14 @@ function App() {
     Authentication.initiateAuthentication();
   }
 
-  const addSong = function (name, id) {
-     setDisplayingPlaylistTracks([...displayingPlaylistTracks, {name,id,key:id}]);
+  const addSong = function (name, id, artist) {
+     setDisplayingPlaylistTracks([...displayingPlaylistTracks, {name,id,key:id,artist}]);
   }
 
-  const removeSong = function (name, id) {
-    
+  const removeSong = function (id) {
+    let currentTracks = displayingPlaylistTracks;
+    currentTracks =  currentTracks.filter(x => x.id !== id);
+    setDisplayingPlaylistTracks(currentTracks);
   }
 
   const searchSong = function (event) {
@@ -31,13 +34,15 @@ function App() {
     setDisplayingArtist([]);
     let searchInput = document.getElementById('searchText');
     getSongsfromSpotify(searchInput.value);
+    document.getElementById('playlist').classList.add("shown");
   }
 
   const searchAlbum = (event) => {
     setDisplayingTracks([])
     setDisplayingArtist([])
     let searchInput = document.getElementById('searchText')
-    getAlbumfromSpotify(searchInput.value)
+    getAlbumfromSpotify(searchInput.value);
+    document.getElementById('playlist').classList.add("shown");
   }
 
   const searchArtist = function(event) {
@@ -45,8 +50,38 @@ function App() {
     setDisplayingAlbums([]);
     let searchInput = document.getElementById('searchText');
     getArtistFromSpotify(searchInput.value);
+    document.getElementById('playlist').classList.add("shown");
+  }
+
+  const createPlaylist = function() {
+
   }
   
+  const postPlaylistToSpotify = function(playlistName) {
+    const userId = localStorage.getItem('user_id');
+    const createPlaylistURL = `${spotifyBaseURI}/users/userId/playlists`;
+
+    let postBody = {
+      name: playlistName
+    };
+
+    fetch(createPlaylistURL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      },
+      body: JSON.stringify(postBody)
+    }).then(response => 
+      {
+        return response.json();
+      }).then(data => {
+      if(data.error !== undefined && data.error.status === 401) {
+        localStorage.removeItem('access_token');
+        Authentication.initiateAuthentication();
+        return;
+      }
+    })
+  }
 
   const getSongsfromSpotify = function(songTitle) {
     const getTrackURL = `${spotifyBaseURI}/search?q=${songTitle}&type=track&limit10`;
@@ -167,13 +202,18 @@ function App() {
           <h3>Playlist:</h3>
            {displayingPlaylistTracks.map((track) => {
         return (
-        <> 
-          <div key={track.key}>{track.name}</div>
-          <div key={track.artist}>{track.artist}</div>
-          <button id="remove">Remove</button>
-        </> 
+          <PlaylistTrack
+          id={track.id}
+          removeSong={removeSong}
+          name={track.name}
+          albumName={track.album}
+          key={track.id}
+          artistName={track.artist}
+          />
         );
         })}
+          <input placeholder='Playlist name'></input>
+          <button>Create playlist</button>
         </div>
       </div>
     </>

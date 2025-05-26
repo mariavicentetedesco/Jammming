@@ -78,7 +78,20 @@ const Authentication = {
         const response = await body.json();
         
         localStorage.setItem('access_token', response.access_token);
+
+        const userIdRequest = await fetch("https://api.spotify.com/v1/me",
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${response.access_token}`
+            }
+          }
+        )
+        const userIdResponse = await userIdRequest.json()
+        localStorage.setItem('user_id', userIdResponse.id);
+       
         window.location = '/';
+        
         }
       
 }
