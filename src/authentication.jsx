@@ -1,5 +1,5 @@
 const clientId = '39a581824af14566bbe139e66c337f55';
-const redirectUri = 'https://127.0.0.1:5173';
+const redirectUri = 'https://mvtjammming.netlify.app/';
 
 const Authentication = {
 
